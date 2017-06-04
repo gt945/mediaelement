@@ -194,6 +194,9 @@ Reference: http://blog.rrwd.nl/2015/04/04/the-screen-reader-text-class-why-and-h
     width: 100%;
     z-index: 0;
 }
+.mejs__elements {
+    display: flex;
+}
 .mejs__controls {
     bottom: 0;
     height: 40px;
