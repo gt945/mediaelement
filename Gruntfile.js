@@ -76,6 +76,7 @@ module.exports = function (grunt) {
 						'src/js/renderers/flv.js',
 						'src/js/renderers/hls.js',
 						'src/js/renderers/youtube.js',
+						'src/js/renderers/vod.js',
 					]),
 					// just player
 					'build/mediaelementplayer.js': [
@@ -107,6 +108,7 @@ module.exports = function (grunt) {
 						'src/js/renderers/flv.js',
 						'src/js/renderers/hls.js',
 						'src/js/renderers/youtube.js',
+						'src/js/renderers/vod.js',
 					]).concat([
 						'src/js/library.js',
 						'src/js/player.js',
