@@ -7854,6 +7854,7 @@ var VODPlayer = function () {
 			s.pause = false;
 			s.appending = false;
 			s.eos = false;
+			s._eos = false;
 			if (s.socket) {
 				s.socket.close();
 				s.socket = null;
@@ -7895,12 +7896,21 @@ var VODPlayer = function () {
 			});
 		}
 	}, {
+		key: 'retry',
+		value: function retry() {
+			var s = this;
+			s.offset = s._offset;
+			s.reset();
+			s.start();
+		}
+	}, {
 		key: 'setSrc',
 		value: function setSrc(v) {
 			var s = this;
 			s.reset();
 			s.src = v;
 			s.offset = 0;
+			s._offset = 0;
 			s.speed = 1;
 			s.duration = 0;
 			s.start();
@@ -7931,7 +7941,9 @@ var VODPlayer = function () {
 	}, {
 		key: 'getCurrentTime',
 		value: function getCurrentTime() {
-			return this.offset + this.media.currentTime * this.speed;
+			var s = this;
+			s._offset = s.offset + s.media.currentTime * s.speed;
+			return s._offset;
 		}
 	}, {
 		key: 'getPlaybackRate',
@@ -7972,24 +7984,58 @@ var VODPlayer = function () {
 			var url = _dereq_(9);
 			s.socket.emit('start', { file: url.parse(s.src).pathname, offset: s.offset, speed: Math.log2(s.speed) });
 
-			s.socket.on('data', function (buffer) {
-				s.queue.push(buffer);
+			s.socket.on('data', function (data) {
+				s.socket.emit('ack', data.seq);
+				s.queue.push(data.buffer);
 				if (!s.appending) {
 					s.doAppend();
 				}
 			});
 
-			s.socket.on('duration', function (duration) {
-				s.duration = parseInt(duration);
+			s.socket.on('mediainfo', function (mediainfo) {
+				s.duration = parseInt(mediainfo['format']['duration']);
+			});
+
+			s.socket.on('verbose', function (msg) {
+				
 			});
 
 			s.socket.on('eos', function () {
 				s.eos = true;
 			});
+
+			s.socket.on('error', function () {
+				s.retry();
+			});
+
+			s.socket.on('disconnect', function (reason) {
+				if (reason != 'io client disconnect') {
+					s.retry();
+				}
+			});
 		}
 	}, {
 		key: 'onMediaSourceClose',
 		value: function onMediaSourceClose() {}
+	}, {
+		key: 'doEos',
+		value: function doEos() {
+			var s = this;
+			if (s.eos && !s._eos) {
+				if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
+					try {
+						s.mediaSource.endOfStream();
+						s._eos = true;
+					} catch (e) {}
+				}
+
+				if (!s._eos) {
+					setTimeout(function () {
+						s.doEos();
+					}, 200);
+				}
+			}
+		}
 	}, {
 		key: 'doAppend',
 		value: function doAppend() {
@@ -8029,7 +8075,7 @@ var VODPlayer = function () {
 		value: function onSBUpdateEnd() {
 			var s = this;
 			if (!s.queue.length && s.eos && !s.sourceBuffer.updating) {
-				s.mediaSource.endOfStream();
+				s.doEos();
 			} else {
 				s.doAppend();
 			}
@@ -8038,7 +8084,8 @@ var VODPlayer = function () {
 		key: 'onSBUpdateError',
 		value: function onSBUpdateError() {
 			var s = this;
-			s.socket.disconnect();
+			s.retry();
+			return true;
 		}
 	}]);
 
@@ -8134,8 +8181,12 @@ var VODElement = {
 		var events = _mejs2.default.html5media.events.concat(['click', 'mouseover', 'mouseout']),
 		    assignEvents = function assignEvents(eventName) {
 			node.addEventListener(eventName, function (e) {
-				var event = (0, _general.createEvent)(e.type, mediaElement);
-				mediaElement.dispatchEvent(event);
+				if (e.type == 'error') {
+					return true;
+				} else {
+					var _event = (0, _general.createEvent)(e.type, mediaElement);
+					mediaElement.dispatchEvent(_event);
+				}
 			});
 		};
 
