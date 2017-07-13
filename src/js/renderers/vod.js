@@ -27,6 +27,7 @@ class VODPlayer {
 		s.pause = false;
 		s.appending = false;
 		s.eos = false;
+		s._eos = false;
 		if (s.socket) {
 			s.socket.close();
 			s.socket = null;
@@ -40,10 +41,10 @@ class VODPlayer {
 			//s.mediaSource.removeSourceBuffer(s.sourceBuffer);
 			s.sourceBuffer.removeEventListener('updateend', this.onsbue);
 			s.sourceBuffer.removeEventListener('error', this.onsbe);
-			
+
 			s.mediaSource.removeEventListener('sourceopen', s.onmso);
 			s.mediaSource.removeEventListener('sourceclose', s.onmsc);
-			
+
 			delete s.mediaSource;
 			s.mediaSource = null;
 			s.sourceBuffer = null;
@@ -51,12 +52,12 @@ class VODPlayer {
 		
 	}
 	
-	start() {
+	start () {
 		let s = this;
 		let socket = s.socket = io.connect();
 		socket.on('connect', function(){
 			let ms = s.mediaSource = new MediaSource();
-			
+
 			//Media Source listeners
 			s.onmso = s.onMediaSourceOpen.bind(s);
 // 			s.onmse = s.onMediaSourceEnded.bind(s);
@@ -64,7 +65,7 @@ class VODPlayer {
 			ms.addEventListener('sourceopen', s.onmso);
 // 			ms.addEventListener('sourceended', s.onmse);
 			ms.addEventListener('sourceclose', s.onmsc);
-			
+
 			// link video and media Source
 			s.media.src = URL.createObjectURL(ms);
 			s.media.play();
@@ -72,11 +73,19 @@ class VODPlayer {
 		
 	}
 	
+	retry () {
+		let s = this;
+		s.offset = s._offset;
+		s.reset();
+		s.start();
+	}
+
 	setSrc (v) {
 		let s = this;
 		s.reset();
 		s.src = v;
 		s.offset = 0;
+		s._offset = 0;
 		s.speed = 1;
 		s.duration = 0;
 		s.start();
@@ -88,7 +97,7 @@ class VODPlayer {
 		this.reset();
 		this.start();
 	}
-	
+
 	setPlaybackRate (v) {
 		let s = this;
 		if (v != s.speed) {
@@ -105,7 +114,9 @@ class VODPlayer {
 	}
 
 	getCurrentTime () {
-		return this.offset + this.media.currentTime * this.speed;
+		let s = this;
+		s._offset = s.offset + s.media.currentTime * s.speed;
+		return s._offset;
 	}
 	
 	getPlaybackRate (){
@@ -142,24 +153,57 @@ class VODPlayer {
 		const url = require('url');
 		s.socket.emit('start', {file:  url.parse(s.src).pathname, offset: s.offset, speed: Math.log2(s.speed)});
 		
-		s.socket.on('data', function(buffer){
-			s.queue.push(buffer);
+		s.socket.on('data', function(data){
+			s.socket.emit('ack', data.seq);
+			s.queue.push(data.buffer);
 			if (!s.appending) {
 				s.doAppend();
 			}
 		});
 		
-		s.socket.on('duration', function(duration){
-			s.duration = parseInt(duration);
+		s.socket.on('mediainfo', function(mediainfo){
+			s.duration = parseInt(mediainfo['format']['duration']);
 		});
-		
+
+		s.socket.on('verbose', function(msg){
+			console.log(msg);
+		});
+
 		s.socket.on('eos', function(){
 			s.eos = true;
+		});
+
+		s.socket.on('error', function(){
+			s.retry();
+		});
+
+		s.socket.on('disconnect', function(reason){
+			if (reason != 'io client disconnect') {
+				s.retry();
+			}
 		});
 	}
 	
 	onMediaSourceClose () {
 		
+	}
+	
+	doEos () {
+		let s = this;
+		if (s.eos && !s._eos) {
+			if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
+				try {
+					s.mediaSource.endOfStream();
+					s._eos = true;
+				} catch(e)  {}
+			}
+
+			if (!s._eos) {
+				setTimeout(function(){
+					s.doEos();
+				}, 200);
+			}
+		}
 	}
 	
 	doAppend () {
@@ -201,7 +245,7 @@ class VODPlayer {
 	onSBUpdateEnd () {
 		let s = this;
 		if (!s.queue.length && s.eos && !s.sourceBuffer.updating) {
-			s.mediaSource.endOfStream();
+			s.doEos();
 		} else {
 			s.doAppend();
 		}
@@ -210,7 +254,8 @@ class VODPlayer {
 	
 	onSBUpdateError () {
 		let s = this;
-		s.socket.disconnect();
+		s.retry();
+		return true;
 	}
 
 }
@@ -329,8 +374,12 @@ const VODElement = {
 			events = mejs.html5media.events.concat(['click', 'mouseover', 'mouseout']),
 			assignEvents = (eventName) => {
 				node.addEventListener(eventName, (e) => {
-					const event = createEvent(e.type, mediaElement);
-					mediaElement.dispatchEvent(event);
+					if(e.type == 'error') {
+						return true;
+					} else {
+						const event = createEvent(e.type, mediaElement);
+						mediaElement.dispatchEvent(event);
+					}
 				});
 
 			}
