@@ -7986,7 +7986,7 @@ var VODPlayer = function () {
 
 			s.socket.on('data', function (data) {
 				s.socket.emit('ack', data.seq);
-				s.queue.push(data.buffer);
+				s.queue.push(data);
 				if (!s.appending) {
 					s.doAppend();
 				}
@@ -8009,7 +8009,7 @@ var VODPlayer = function () {
 			});
 
 			s.socket.on('disconnect', function (reason) {
-				if (reason != 'io client disconnect') {
+				if (reason != 'io client disconnect' && reason != 'io server disconnect') {
 					s.retry();
 				}
 			});
@@ -8043,9 +8043,9 @@ var VODPlayer = function () {
 			var appending = false;
 			if (!s.sourceBuffer.updating) {
 				if (s.queue.length) {
-					var buffer = s.queue.shift();
+					var data = s.queue.shift();
 					try {
-						s.sourceBuffer.appendBuffer(buffer);
+						s.sourceBuffer.appendBuffer(data.buffer);
 						appending = true;
 					} catch (err) {
 						s.queue.unshift(buffer);
