@@ -155,7 +155,7 @@ class VODPlayer {
 		
 		s.socket.on('data', function(data){
 			s.socket.emit('ack', data.seq);
-			s.queue.push(data.buffer);
+			s.queue.push(data);
 			if (!s.appending) {
 				s.doAppend();
 			}
@@ -178,7 +178,7 @@ class VODPlayer {
 		});
 
 		s.socket.on('disconnect', function(reason){
-			if (reason != 'io client disconnect') {
+			if (reason != 'io client disconnect' && reason != 'io server disconnect') {
 				s.retry();
 			}
 		});
@@ -211,9 +211,9 @@ class VODPlayer {
 		let appending = false;
 		if (!s.sourceBuffer.updating) {
 			if (s.queue.length) {
-				let buffer = s.queue.shift();
+				let data = s.queue.shift();
 				try {
-					s.sourceBuffer.appendBuffer(buffer);
+					s.sourceBuffer.appendBuffer(data.buffer);
 					appending = true;
 				} catch(err) {
 					s.queue.unshift(buffer);
