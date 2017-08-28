@@ -4201,14 +4201,14 @@ var VODPlayer = function () {
 		value: function doAppend() {
 			var s = this;
 			var appending = false;
-			if (!s.sourceBuffer.updating) {
+			if (s.sourceBuffer && !s.sourceBuffer.updating) {
 				if (s.queue.length) {
 					var data = s.queue.shift();
 					try {
 						s.sourceBuffer.appendBuffer(data.buffer);
 						appending = true;
 					} catch (err) {
-						s.queue.unshift(buffer);
+						s.queue.unshift(data);
 					}
 
 					if (s.queue.length > 10) {
@@ -4224,7 +4224,7 @@ var VODPlayer = function () {
 			}
 			s.appending = appending;
 
-			if (s.queue.length && !appending) {
+			if (s.sourceBuffer && s.queue.length && !appending) {
 				setTimeout(function () {
 					s.doAppend();
 				}, 100);
@@ -4243,8 +4243,6 @@ var VODPlayer = function () {
 	}, {
 		key: 'onSBUpdateError',
 		value: function onSBUpdateError() {
-			var s = this;
-			s.retry();
 			return true;
 		}
 	}]);
