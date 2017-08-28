@@ -209,14 +209,14 @@ class VODPlayer {
 	doAppend () {
 		let s = this;
 		let appending = false;
-		if (!s.sourceBuffer.updating) {
+		if (s.sourceBuffer && !s.sourceBuffer.updating) {
 			if (s.queue.length) {
 				let data = s.queue.shift();
 				try {
 					s.sourceBuffer.appendBuffer(data.buffer);
 					appending = true;
 				} catch(err) {
-					s.queue.unshift(buffer);
+					s.queue.unshift(data);
 				}
 				
 				if (s.queue.length > 10) {
@@ -234,7 +234,7 @@ class VODPlayer {
 		}
 		s.appending = appending;
 		
-		if (s.queue.length && !appending) {
+		if (s.sourceBuffer && s.queue.length && !appending) {
 			setTimeout(function(){
 				s.doAppend();
 			}, 100);
@@ -253,8 +253,8 @@ class VODPlayer {
 	}
 	
 	onSBUpdateError () {
-		let s = this;
-		s.retry();
+		//let s = this;
+		//s.retry();
 		return true;
 	}
 
