@@ -2787,9 +2787,7 @@ Object.assign(_player2.default.prototype, {
 						    absDiff = Math.abs(screenWidth - windowWidth),
 						    marginError = screenWidth * percentErrorMargin;
 
-						if (absDiff > marginError) {
-							t.exitFullScreen();
-						} else {
+						if (absDiff > marginError) {} else {
 							setTimeout(checkFullscreen, 500);
 						}
 					}
