@@ -383,7 +383,10 @@ class MediaElementPlayer {
 			t.container.innerHTML = `<div class="${t.options.classPrefix}inner">` +
 				`<div class="${t.options.classPrefix}mediaelement"></div>` +
 				`<div class="${t.options.classPrefix}layers"></div>` +
-				`<div class="${t.options.classPrefix}controls"></div>` +
+				`<div class="${t.options.classPrefix}controls">` +
+				`<div class="${t.options.classPrefix}progress"></div>` +
+				`<div class="${t.options.classPrefix}elements"></div>` +
+				`</div>` +
 				`<div class="${t.options.classPrefix}clear"></div>` +
 			`</div>`;
 			t.container.addEventListener('focus', (e) => {
@@ -490,6 +493,8 @@ class MediaElementPlayer {
 
 			// find parts
 			t.controls = t.container.querySelector(`.${t.options.classPrefix}controls`);
+			t.progress = t.container.querySelector(`.${t.options.classPrefix}progress`);
+			t.elements = t.container.querySelector(`.${t.options.classPrefix}elements`);
 			t.layers = t.container.querySelector(`.${t.options.classPrefix}layers`);
 
 			// determine the size
@@ -1400,12 +1405,14 @@ class MediaElementPlayer {
 
 		const t = this;
 
-		if (t.featurePosition[key] !== undefined) {
+		if (key == 'progress') {
+			t.progress.appendChild(element);
+		} else if (t.featurePosition[key] !== undefined) {
 			const child = t.controls.children[t.featurePosition[key] - 1];
 			child.parentNode.insertBefore(element, child.nextSibling);
 		} else {
-			t.controls.appendChild(element);
-			const children = t.controls.children;
+			t.elements.appendChild(element);
+			const children = t.elements.children;
 			for (let i = 0, total = children.length; i < total; i++) {
 				if (element == children[i]) {
 					t.featurePosition[key] = i;
