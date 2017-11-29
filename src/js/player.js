@@ -1408,7 +1408,7 @@ class MediaElementPlayer {
 		if (key == 'progress') {
 			t.progress.appendChild(element);
 		} else if (t.featurePosition[key] !== undefined) {
-			const child = t.controls.children[t.featurePosition[key] - 1];
+			const child = t.elements.children[t.featurePosition[key] - 1];
 			child.parentNode.insertBefore(element, child.nextSibling);
 		} else {
 			t.elements.appendChild(element);
