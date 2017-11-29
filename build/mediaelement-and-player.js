@@ -5061,7 +5061,7 @@ var MediaElementPlayer = function () {
 			t.container.tabIndex = 0;
 			t.container.setAttribute('role', 'application');
 			t.container.setAttribute('aria-label', videoPlayerTitle);
-			t.container.innerHTML = '<div class="' + t.options.classPrefix + 'inner">' + ('<div class="' + t.options.classPrefix + 'mediaelement"></div>') + ('<div class="' + t.options.classPrefix + 'layers"></div>') + ('<div class="' + t.options.classPrefix + 'controls"></div>') + ('<div class="' + t.options.classPrefix + 'clear"></div>') + '</div>';
+			t.container.innerHTML = '<div class="' + t.options.classPrefix + 'inner">' + ('<div class="' + t.options.classPrefix + 'mediaelement"></div>') + ('<div class="' + t.options.classPrefix + 'layers"></div>') + ('<div class="' + t.options.classPrefix + 'controls">') + ('<div class="' + t.options.classPrefix + 'progress"></div>') + ('<div class="' + t.options.classPrefix + 'elements"></div>') + '</div>' + ('<div class="' + t.options.classPrefix + 'clear"></div>') + '</div>';
 			t.container.addEventListener('focus', function (e) {
 				if (!t.controlsAreVisible && !t.hasFocus && t.controlsEnabled) {
 					t.showControls(true);
@@ -5151,6 +5151,8 @@ var MediaElementPlayer = function () {
 			t.media.player = t;
 
 			t.controls = t.container.querySelector('.' + t.options.classPrefix + 'controls');
+			t.progress = t.container.querySelector('.' + t.options.classPrefix + 'progress');
+			t.elements = t.container.querySelector('.' + t.options.classPrefix + 'elements');
 			t.layers = t.container.querySelector('.' + t.options.classPrefix + 'layers');
 
 			var tagType = t.isVideo ? 'video' : 'audio',
@@ -5960,12 +5962,14 @@ var MediaElementPlayer = function () {
 
 			var t = this;
 
-			if (t.featurePosition[key] !== undefined) {
+			if (key == 'progress') {
+				t.progress.appendChild(element);
+			} else if (t.featurePosition[key] !== undefined) {
 				var child = t.controls.children[t.featurePosition[key] - 1];
 				child.parentNode.insertBefore(element, child.nextSibling);
 			} else {
-				t.controls.appendChild(element);
-				var children = t.controls.children;
+				t.elements.appendChild(element);
+				var children = t.elements.children;
 				for (var i = 0, total = children.length; i < total; i++) {
 					if (element == children[i]) {
 						t.featurePosition[key] = i;
