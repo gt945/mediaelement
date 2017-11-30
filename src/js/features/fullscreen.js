@@ -270,13 +270,13 @@ Object.assign(MediaElementPlayer.prototype, {
 		t.isFullScreen = true;
 
 		const
-			zoomFactor = Math.min(screen.width / t.width, screen.height / t.height),
+			zoomFactor = screen.height / 500,
 			captionText = t.container.querySelector(`.${t.options.classPrefix}captions-text`)
 		;
 		if (captionText) {
 			captionText.style.fontSize = `${(zoomFactor * 100)}%`;
 			captionText.style.lineHeight = 'normal';
-			t.container.querySelector(`.${t.options.classPrefix}captions-position`).style.bottom = '45px';
+			t.container.querySelector(`.${t.options.classPrefix}captions-position`).style.bottom = '25px';
 		}
 		const event = createEvent('enteredfullscreen', t.container);
 		t.container.dispatchEvent(event);
