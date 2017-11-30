@@ -160,7 +160,7 @@ Object.assign(MediaElementPlayer.prototype, {
 
 		const
 			inEvents = ['mouseenter', 'focusin'],
-			outEvents = ['mouseleave', 'focusout']
+			outEvents = ['mouseleave']
 		;
 
 		// if only one language then just make the button a toggle
@@ -191,11 +191,11 @@ Object.assign(MediaElementPlayer.prototype, {
 			}
 
 			for (let i = 0, total = captions.length; i < total; i++) {
-				captions[i].addEventListener('click',  function () {
+				captions[i].parentElement.addEventListener('click',  function () {
 					// value is trackId, same as the actual id, and we're using it here
 					// because the "none" checkbox doesn't have a trackId
 					// to use, but we want to know when "none" is clicked
-					player.setTrack(this.value);
+					player.setTrack(this.firstElementChild.value);
 				});
 			}
 
