@@ -2835,12 +2835,12 @@ Object.assign(_player2.default.prototype, {
 		t.setControlsSize();
 		t.isFullScreen = true;
 
-		var zoomFactor = Math.min(screen.width / t.width, screen.height / t.height),
+		var zoomFactor = screen.height / 500,
 		    captionText = t.container.querySelector('.' + t.options.classPrefix + 'captions-text');
 		if (captionText) {
 			captionText.style.fontSize = zoomFactor * 100 + '%';
 			captionText.style.lineHeight = 'normal';
-			t.container.querySelector('.' + t.options.classPrefix + 'captions-position').style.bottom = '45px';
+			t.container.querySelector('.' + t.options.classPrefix + 'captions-position').style.bottom = '25px';
 		}
 		var event = (0, _general.createEvent)('enteredfullscreen', t.container);
 		t.container.dispatchEvent(event);
@@ -3671,7 +3671,7 @@ Object.assign(_player2.default.prototype, {
 		player.loadNextTrack();
 
 		var inEvents = ['mouseenter', 'focusin'],
-		    outEvents = ['mouseleave', 'focusout'];
+		    outEvents = ['mouseleave'];
 
 		if (t.options.toggleCaptionsButtonWhenOnlyOne && subtitleCount === 1) {
 			player.captionsButton.addEventListener('click', function () {
@@ -3698,8 +3698,8 @@ Object.assign(_player2.default.prototype, {
 			}
 
 			for (var _i5 = 0, _total3 = captions.length; _i5 < _total3; _i5++) {
-				captions[_i5].addEventListener('click', function () {
-					player.setTrack(this.value);
+				captions[_i5].parentElement.addEventListener('click', function () {
+					player.setTrack(this.firstElementChild.value);
 				});
 			}
 
@@ -5254,7 +5254,7 @@ var MediaElementPlayer = function () {
 
 			doAnimation = doAnimation === undefined || doAnimation;
 
-			if (forceHide !== true && (!t.controlsAreVisible || t.options.alwaysShowControls || t.keyboardAction || t.media.paused && t.media.readyState === 4 && (!t.options.hideVideoControlsOnLoad && t.media.currentTime <= 0 || !t.options.hideVideoControlsOnPause && t.media.currentTime > 0) || t.isVideo && !t.options.hideVideoControlsOnLoad && !t.media.readyState || t.media.ended)) {
+			if (forceHide !== true && (!t.controlsAreVisible || t.options.alwaysShowControls || t.media.paused && t.media.readyState === 4 && (!t.options.hideVideoControlsOnLoad && t.media.currentTime <= 0 || !t.options.hideVideoControlsOnPause && t.media.currentTime > 0) || t.isVideo && !t.options.hideVideoControlsOnLoad && !t.media.readyState || t.media.ended)) {
 				return;
 			}
 
@@ -5580,7 +5580,9 @@ var MediaElementPlayer = function () {
 				t.container.addEventListener('focusin', function (e) {
 					dom.removeClass(e.currentTarget, t.options.classPrefix + 'container-keyboard-inactive');
 					if (t.controlsEnabled && !t.options.alwaysShowControls) {
-						t.showControls(false);
+						t.killControlsTimer('enter');
+						t.showControls();
+						t.startControlsTimer(t.options.controlsTimeoutMouseEnter);
 					}
 				});
 
@@ -5589,8 +5591,8 @@ var MediaElementPlayer = function () {
 						if (e.relatedTarget) {
 							if (t.keyboardAction && !e.relatedTarget.closest('.' + t.options.classPrefix + 'container')) {
 								t.keyboardAction = false;
-								if (t.isVideo && !t.options.alwaysShowControls) {
-									t.hideControls(true);
+								if (t.isVideo && !t.options.alwaysShowControls && !t.media.paused) {
+									t.startControlsTimer(t.options.controlsTimeoutMouseLeave);
 								}
 							}
 						}
@@ -5965,7 +5967,7 @@ var MediaElementPlayer = function () {
 			if (key == 'progress') {
 				t.progress.appendChild(element);
 			} else if (t.featurePosition[key] !== undefined) {
-				var child = t.controls.children[t.featurePosition[key] - 1];
+				var child = t.elements.children[t.featurePosition[key] - 1];
 				child.parentNode.insertBefore(element, child.nextSibling);
 			} else {
 				t.elements.appendChild(element);

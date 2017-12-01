@@ -326,7 +326,7 @@ Reference: http://blog.rrwd.nl/2015/04/04/the-screen-reader-text-class-why-and-h
     border-radius: 2px;
     cursor: pointer;
     display: block;
-    height: 5px;
+    height: 10px;
     position: absolute;
 }
 
@@ -422,14 +422,13 @@ Reference: http://blog.rrwd.nl/2015/04/04/the-screen-reader-text-class-why-and-h
 
 .mejs__time-handle-content {
     border: 4px solid rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    height: 10px;
+    height: 15px;
     left: -7px;
     top: -7px;
     -webkit-transform: scale(0);
         -ms-transform: scale(0);
             transform: scale(0);
-    width: 10px;
+    width: 5px;
 }
 
 .mejs__time-rail:hover .mejs__time-handle-content,
@@ -736,7 +735,7 @@ Reference: http://blog.rrwd.nl/2015/04/04/the-screen-reader-text-class-why-and-h
 }
 
 .mejs__captions-position-hover {
-    bottom: 35px;
+    bottom: 60px;
 }
 
 .mejs__captions-text,
