@@ -93,9 +93,15 @@ class VODPlayer {
 	}
 
 	setCurrentTime (v) {
-		this.offset = v;
-		this.reset();
-		this.start();
+		let s = this;
+		var buffered = s.getBuffered();
+		if (v > buffered.start() && v < buffered.end()) {
+			s.media.currentTime = (v - s.offset) / s.speed;
+		} else {
+			s.offset = v;
+			s.reset();
+			s.start();
+		}
 	}
 
 	setPlaybackRate (v) {
@@ -133,7 +139,7 @@ class VODPlayer {
 			
 		return {
 			start: () => {
-				return s.offset + buffered.start(0);
+				return s.offset + buffered.start(0) * s.speed;
 			},
 			end: () => {
 				return s.offset + buffered.end(0) * s.speed;
@@ -191,17 +197,15 @@ class VODPlayer {
 	doEos () {
 		let s = this;
 		if (s.eos && !s._eos) {
-			if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
+			if (s.mediaSource.readyState === 'open') {
 				try {
 					s.mediaSource.endOfStream();
 					s._eos = true;
-				} catch(e)  {}
-			}
-
-			if (!s._eos) {
-				setTimeout(function(){
-					s.doEos();
-				}, 200);
+				} catch(e)  {
+					setTimeout(function(){
+						s.doEos();
+					}, 100);
+				}
 			}
 		}
 	}
@@ -210,7 +214,7 @@ class VODPlayer {
 		let s = this;
 		let appending = false;
 		if (s.sourceBuffer && !s.sourceBuffer.updating) {
-			if (s.queue.length) {
+			if (s.queue.length > 1) {
 				let data = s.queue.shift();
 				try {
 					s.sourceBuffer.appendBuffer(data.buffer);
@@ -234,17 +238,17 @@ class VODPlayer {
 		}
 		s.appending = appending;
 		
-		if (s.sourceBuffer && s.queue.length && !appending) {
+		if (s.sourceBuffer && s.queue.length > 1 && !appending) {
 			setTimeout(function(){
 				s.doAppend();
-			}, 100);
+			}, 500);
 		}
 		
 	}
 	
 	onSBUpdateEnd () {
 		let s = this;
-		if (!s.queue.length && s.eos && !s.sourceBuffer.updating) {
+		if (s.queue.length == 1 && s.eos) {
 			s.doEos();
 		} else {
 			s.doAppend();
@@ -252,9 +256,10 @@ class VODPlayer {
 		
 	}
 	
-	onSBUpdateError () {
+	onSBUpdateError (e) {
 		//let s = this;
 		//s.retry();
+		console.log(e);
 		return true;
 	}
 
