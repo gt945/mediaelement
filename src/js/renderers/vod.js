@@ -28,6 +28,7 @@ class VODPlayer {
 		s.appending = false;
 		s.eos = false;
 		s._eos = false;
+		s._lost = false;
 		if (s.socket) {
 			s.socket.close();
 			s.socket = null;
@@ -56,19 +57,23 @@ class VODPlayer {
 		let s = this;
 		let socket = s.socket = io.connect();
 		socket.on('connect', function(){
-			let ms = s.mediaSource = new MediaSource();
+			if (s._lost) {
+				s.checkBuffer();
+			} else {
+				let ms = s.mediaSource = new MediaSource();
 
-			//Media Source listeners
-			s.onmso = s.onMediaSourceOpen.bind(s);
-// 			s.onmse = s.onMediaSourceEnded.bind(s);
-			s.onmsc = s.onMediaSourceClose.bind(s);
-			ms.addEventListener('sourceopen', s.onmso);
-// 			ms.addEventListener('sourceended', s.onmse);
-			ms.addEventListener('sourceclose', s.onmsc);
+				//Media Source listeners
+				s.onmso = s.onMediaSourceOpen.bind(s);
+// 				s.onmse = s.onMediaSourceEnded.bind(s);
+				s.onmsc = s.onMediaSourceClose.bind(s);
+				ms.addEventListener('sourceopen', s.onmso);
+// 				ms.addEventListener('sourceended', s.onmse);
+				ms.addEventListener('sourceclose', s.onmsc);
 
-			// link video and media Source
-			s.media.src = URL.createObjectURL(ms);
-			s.media.play();
+				// link video and media Source
+				s.media.src = URL.createObjectURL(ms);
+				s.media.play();
+			}
 		});
 		
 	}
@@ -139,15 +144,30 @@ class VODPlayer {
 			
 		return {
 			start: () => {
-				return s.offset + buffered.start(0) * s.speed;
+				return buffered.length ? s.offset + buffered.start(0) * s.speed : 0;
 			},
 			end: () => {
-				return s.offset + buffered.end(0) * s.speed;
+				return buffered.length ? s.offset + buffered.end(0) * s.speed : 0;
 			},
 			length: buffered.length
 		}
 	}
-	
+
+	checkBuffer(){
+		let s = this;
+		var buffered = s.getBuffered();
+		var t = s.getCurrentTime ();
+		if (s._lost) {
+			if (t + 1 < buffered.end()) {
+				setTimeout(function(){
+					s.checkBuffer();
+				}, 1000);
+			} else {
+				s.retry();
+			}
+		}
+	}
+
 	onMediaSourceOpen () {
 		let mimeCodec = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"';
 		let s = this;
@@ -184,8 +204,11 @@ class VODPlayer {
 		});
 
 		s.socket.on('disconnect', function(reason){
-			if (reason != 'io client disconnect' && reason != 'io server disconnect') {
-				s.retry();
+			if (reason == 'io client disconnect') {
+				//Do nothing
+			} else if (reason == 'io server disconnect' || reason == 'transport close' || !s.eos) {
+				s._lost = true;
+				s.checkBuffer();
 			}
 		});
 	}
@@ -197,15 +220,18 @@ class VODPlayer {
 	doEos () {
 		let s = this;
 		if (s.eos && !s._eos) {
-			if (s.mediaSource.readyState === 'open') {
+			if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
 				try {
 					s.mediaSource.endOfStream();
 					s._eos = true;
 				} catch(e)  {
-					setTimeout(function(){
-						s.doEos();
-					}, 100);
+					console.log(e);
 				}
+			}
+			if (!s._eos) {
+				setTimeout(function(){
+					s.doEos();
+				}, 500);
 			}
 		}
 	}
