@@ -72,7 +72,7 @@ class VODPlayer {
 
 				// link video and media Source
 				s.media.src = URL.createObjectURL(ms);
-				s.media.play();
+				setTimeout(() => s.media.native_play() , 0);
 			}
 		});
 		
@@ -93,8 +93,18 @@ class VODPlayer {
 		s._offset = 0;
 		s.speed = 1;
 		s.duration = 0;
-		s.start();
+		s.media.src = '';
+		//s.start();
 		
+	}
+	
+	play () {
+		let s = this;
+		if (s.socket) {
+			s.media.native_play();
+		} else {
+			s.start();
+		}
 	}
 
 	setCurrentTime (v) {
@@ -126,7 +136,11 @@ class VODPlayer {
 
 	getCurrentTime () {
 		let s = this;
+		let d = s.getDuration();
 		s._offset = s.offset + s.media.currentTime * s.speed;
+		if (d > 0 && s._offset + 1 > d && s.mediaSource && s.mediaSource.readyState === 'open') {
+			s.mediaSource.endOfStream();
+		}
 		return s._offset;
 	}
 	
@@ -222,7 +236,7 @@ class VODPlayer {
 		if (s.eos && !s._eos) {
 			if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
 				try {
-					s.mediaSource.endOfStream();
+					//s.mediaSource.endOfStream();
 					s._eos = true;
 				} catch(e)  {
 					console.log(e);
@@ -238,15 +252,17 @@ class VODPlayer {
 	
 	doAppend () {
 		let s = this;
-		let appending = false;
 		if (s.sourceBuffer && !s.sourceBuffer.updating) {
-			if (s.queue.length > 1) {
+			if (s.queue.length > 0) {
 				let data = s.queue.shift();
 				try {
 					s.sourceBuffer.appendBuffer(data.buffer);
-					appending = true;
+					s.appending = true;
 				} catch(err) {
 					s.queue.unshift(data);
+					setTimeout(function(){
+						s.doAppend();
+					}, 1000);
 				}
 				
 				if (s.queue.length > 10) {
@@ -262,24 +278,17 @@ class VODPlayer {
 			}
 			
 		}
-		s.appending = appending;
-		
-		if (s.sourceBuffer && s.queue.length > 1 && !appending) {
-			setTimeout(function(){
-				s.doAppend();
-			}, 500);
-		}
-		
 	}
 	
 	onSBUpdateEnd () {
 		let s = this;
-		if (s.queue.length == 1 && s.eos) {
+		if (s.queue.length > 0) {
+			s.doAppend();
+		} else if (s.eos) {
 			s.doEos();
 		} else {
-			s.doAppend();
+			s.appending = false;
 		}
-		
 	}
 	
 	onSBUpdateError (e) {
@@ -438,6 +447,11 @@ const VODElement = {
 
 			return node;
 		};
+
+		node.native_play = node.play;
+		node.play = () => {
+			VOD.play();
+		}
 
 		if (mediaFiles && mediaFiles.length > 0) {
 			for (let i = 0, total = mediaFiles.length; i < total; i++) {
