@@ -5078,7 +5078,7 @@ var MediaElementPlayer = function () {
 				t.container.style.background = 'transparent';
 				t.container.querySelector('.' + t.options.classPrefix + 'controls').style.display = 'none';
 			}
-
+			t.container.style.overflow = "hidden";
 			if (t.isVideo && t.options.stretching === 'fill' && !dom.hasClass(t.container.parentNode, t.options.classPrefix + 'fill-container')) {
 				t.outerContainer = t.media.parentNode;
 
@@ -5430,12 +5430,15 @@ var MediaElementPlayer = function () {
 					t.media.addEventListener('click', t.clickToPlayPauseCallback);
 
 					if ((_constants.IS_ANDROID || _constants.IS_IOS) && !t.options.alwaysShowControls) {
-						t.node.addEventListener('touchstart', function () {
+						t.node.addEventListener('touchend', function () {
 							if (t.controlsAreVisible) {
 								t.hideControls(false);
 							} else {
 								if (t.controlsEnabled) {
 									t.showControls(false);
+									if (!t.options.alwaysShowControls) {
+										t.startControlsTimer(t.options.controlsTimeoutMouseEnter);
+									}
 								}
 							}
 						});
@@ -5785,7 +5788,7 @@ var MediaElementPlayer = function () {
 				newHeight = parentHeight;
 			}
 
-			if (t.container.parentNode.length > 0 && t.container.parentNode.tagName.toLowerCase() === 'body') {
+			if (t.container.parentNode && t.container.parentNode.tagName.toLowerCase() === 'body') {
 				parentWidth = _window2.default.innerWidth || _document2.default.documentElement.clientWidth || _document2.default.body.clientWidth;
 				newHeight = _window2.default.innerHeight || _document2.default.documentElement.clientHeight || _document2.default.body.clientHeight;
 			}
@@ -7859,6 +7862,7 @@ var VODPlayer = function () {
 			s.appending = false;
 			s.eos = false;
 			s._eos = false;
+			s._lost = false;
 			if (s.socket) {
 				s.socket.close();
 				s.socket = null;
@@ -7886,17 +7890,23 @@ var VODPlayer = function () {
 			var s = this;
 			var socket = s.socket = io.connect();
 			socket.on('connect', function () {
-				var ms = s.mediaSource = new MediaSource();
+				if (s._lost) {
+					s.checkBuffer();
+				} else {
+					var ms = s.mediaSource = new MediaSource();
 
-				s.onmso = s.onMediaSourceOpen.bind(s);
+					s.onmso = s.onMediaSourceOpen.bind(s);
 
-				s.onmsc = s.onMediaSourceClose.bind(s);
-				ms.addEventListener('sourceopen', s.onmso);
+					s.onmsc = s.onMediaSourceClose.bind(s);
+					ms.addEventListener('sourceopen', s.onmso);
 
-				ms.addEventListener('sourceclose', s.onmsc);
+					ms.addEventListener('sourceclose', s.onmsc);
 
-				s.media.src = URL.createObjectURL(ms);
-				s.media.play();
+					s.media.src = URL.createObjectURL(ms);
+					setTimeout(function () {
+						return s.media.native_play();
+					}, 0);
+				}
 			});
 		}
 	}, {
@@ -7917,7 +7927,17 @@ var VODPlayer = function () {
 			s._offset = 0;
 			s.speed = 1;
 			s.duration = 0;
-			s.start();
+			s.media.src = '';
+		}
+	}, {
+		key: 'play',
+		value: function play() {
+			var s = this;
+			if (s.socket) {
+				s.media.native_play();
+			} else {
+				s.start();
+			}
 		}
 	}, {
 		key: 'setCurrentTime',
@@ -7952,7 +7972,11 @@ var VODPlayer = function () {
 		key: 'getCurrentTime',
 		value: function getCurrentTime() {
 			var s = this;
+			var d = s.getDuration();
 			s._offset = s.offset + s.media.currentTime * s.speed;
+			if (d > 0 && s._offset + 1 > d && s.mediaSource && s.mediaSource.readyState === 'open') {
+				s.mediaSource.endOfStream();
+			}
 			return s._offset;
 		}
 	}, {
@@ -7973,13 +7997,29 @@ var VODPlayer = function () {
 
 			return {
 				start: function start() {
-					return s.offset + buffered.start(0) * s.speed;
+					return buffered.length ? s.offset + buffered.start(0) * s.speed : 0;
 				},
 				end: function end() {
-					return s.offset + buffered.end(0) * s.speed;
+					return buffered.length ? s.offset + buffered.end(0) * s.speed : 0;
 				},
 				length: buffered.length
 			};
+		}
+	}, {
+		key: 'checkBuffer',
+		value: function checkBuffer() {
+			var s = this;
+			var buffered = s.getBuffered();
+			var t = s.getCurrentTime();
+			if (s._lost) {
+				if (t + 1 < buffered.end()) {
+					setTimeout(function () {
+						s.checkBuffer();
+					}, 1000);
+				} else {
+					s.retry();
+				}
+			}
 		}
 	}, {
 		key: 'onMediaSourceOpen',
@@ -8019,8 +8059,9 @@ var VODPlayer = function () {
 			});
 
 			s.socket.on('disconnect', function (reason) {
-				if (reason != 'io client disconnect' && reason != 'io server disconnect') {
-					s.retry();
+				if (reason == 'io client disconnect') {} else if (reason == 'io server disconnect' || reason == 'transport close' || !s.eos) {
+					s._lost = true;
+					s.checkBuffer();
 				}
 			});
 		}
@@ -8032,15 +8073,17 @@ var VODPlayer = function () {
 		value: function doEos() {
 			var s = this;
 			if (s.eos && !s._eos) {
-				if (s.mediaSource.readyState === 'open') {
+				if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
 					try {
-						s.mediaSource.endOfStream();
 						s._eos = true;
 					} catch (e) {
-						setTimeout(function () {
-							s.doEos();
-						}, 100);
+						
 					}
+				}
+				if (!s._eos) {
+					setTimeout(function () {
+						s.doEos();
+					}, 500);
 				}
 			}
 		}
@@ -8048,15 +8091,17 @@ var VODPlayer = function () {
 		key: 'doAppend',
 		value: function doAppend() {
 			var s = this;
-			var appending = false;
 			if (s.sourceBuffer && !s.sourceBuffer.updating) {
-				if (s.queue.length > 1) {
+				if (s.queue.length > 0) {
 					var data = s.queue.shift();
 					try {
 						s.sourceBuffer.appendBuffer(data.buffer);
-						appending = true;
+						s.appending = true;
 					} catch (err) {
 						s.queue.unshift(data);
+						setTimeout(function () {
+							s.doAppend();
+						}, 1000);
 					}
 
 					if (s.queue.length > 10) {
@@ -8070,22 +8115,17 @@ var VODPlayer = function () {
 					}
 				}
 			}
-			s.appending = appending;
-
-			if (s.sourceBuffer && s.queue.length > 1 && !appending) {
-				setTimeout(function () {
-					s.doAppend();
-				}, 500);
-			}
 		}
 	}, {
 		key: 'onSBUpdateEnd',
 		value: function onSBUpdateEnd() {
 			var s = this;
-			if (s.queue.length == 1 && s.eos) {
+			if (s.queue.length > 0) {
+				s.doAppend();
+			} else if (s.eos) {
 				s.doEos();
 			} else {
-				s.doAppend();
+				s.appending = false;
 			}
 		}
 	}, {
@@ -8217,6 +8257,11 @@ var VODElement = {
 			node.style.display = '';
 
 			return node;
+		};
+
+		node.native_play = node.play;
+		node.play = function () {
+			VOD.play();
 		};
 
 		if (mediaFiles && mediaFiles.length > 0) {
