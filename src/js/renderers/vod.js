@@ -191,7 +191,7 @@ class VODPlayer {
 		s.sourceBuffer.addEventListener('error', this.onsbe);
 		
 		const url = require('url');
-		s.socket.emit('start', {file:  url.parse(s.src).pathname, offset: s.offset, speed: Math.log2(s.speed)});
+		s.socket.emit('start', {file:  url.parse(s.src).pathname, offset: s.offset, speed: s.speed});
 		
 		s.socket.on('data', function(data){
 			s.socket.emit('ack', data.seq);
