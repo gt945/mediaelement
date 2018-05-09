@@ -1702,6 +1702,7 @@ var VODPlayer = function () {
 		s.queue = [];
 		s.onsbue = s.onSBUpdateEnd.bind(s);
 		s.onsbe = s.onSBUpdateError.bind(s);
+		s.logger = console;
 	}
 
 	_createClass(VODPlayer, [{
@@ -1898,7 +1899,7 @@ var VODPlayer = function () {
 			});
 
 			s.socket.on('verbose', function (msg) {
-				
+				s.logger.log(msg);
 			});
 
 			s.socket.on('eos', function () {
@@ -1926,9 +1927,10 @@ var VODPlayer = function () {
 			if (s.eos && !s._eos) {
 				if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
 					try {
+						s.mediaSource.endOfStream();
 						s._eos = true;
 					} catch (e) {
-						
+						s.logger.log(e);
 					}
 				}
 				if (!s._eos) {
@@ -1939,31 +1941,64 @@ var VODPlayer = function () {
 			}
 		}
 	}, {
+		key: 'needAppend',
+		value: function needAppend() {
+			var s = this;
+			var needAppend = true;
+			var buffered = s.getBuffered();
+			var dur = s.getDuration();
+			var cur = s.getCurrentTime();
+			if (buffered.start() > s.offset) {
+				if (cur < (buffered.start() + buffered.end()) / 2) {
+					needAppend = false;
+				}
+			}
+
+			if (dur - buffered.end() <= 1 * s.speed) {
+				needAppend = false;
+				s.logger.log("Buffer Full" + dur);
+				if (dur - cur <= 1 * s.speed) {
+					s.logger.log("Trigger EOS");
+					s.queue = [];
+				}
+			}
+
+			return needAppend;
+		}
+	}, {
 		key: 'doAppend',
 		value: function doAppend() {
 			var s = this;
 			if (s.sourceBuffer && !s.sourceBuffer.updating) {
 				if (s.queue.length > 0) {
-					var data = s.queue.shift();
-					try {
-						s.sourceBuffer.appendBuffer(data.buffer);
-						s.appending = true;
-					} catch (err) {
-						s.queue.unshift(data);
+					if (s.needAppend()) {
+						var data = s.queue.shift();
+						try {
+							s.sourceBuffer.appendBuffer(data.buffer);
+							s.appending = true;
+						} catch (err) {
+							s.queue.unshift(data);
+							setTimeout(function () {
+								s.doAppend();
+							}, 1000);
+						}
+
+						if (s.queue.length > 512) {
+							if (!s.pause) {
+								s.pause = true;
+								s.socket.emit('pause');
+							}
+						} else if (s.pause) {
+							s.pause = false;
+							s.socket.emit('continue');
+						}
+					} else {
 						setTimeout(function () {
 							s.doAppend();
-						}, 1000);
+						}, 100);
 					}
-
-					if (s.queue.length > 10) {
-						if (!s.pause) {
-							s.pause = true;
-							s.socket.emit('pause');
-						}
-					} else if (s.pause) {
-						s.pause = false;
-						s.socket.emit('continue');
-					}
+				} else if (s.eos) {
+					s.doEos();
 				}
 			}
 		}
@@ -1972,9 +2007,9 @@ var VODPlayer = function () {
 		value: function onSBUpdateEnd() {
 			var s = this;
 			if (s.queue.length > 0) {
-				s.doAppend();
-			} else if (s.eos) {
-				s.doEos();
+				setTimeout(function () {
+					s.doAppend();
+				});
 			} else {
 				s.appending = false;
 			}
@@ -1982,7 +2017,9 @@ var VODPlayer = function () {
 	}, {
 		key: 'onSBUpdateError',
 		value: function onSBUpdateError(e) {
-			
+			var s = this;
+
+			s.logger.log(e);
 			return true;
 		}
 	}]);
