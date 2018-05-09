@@ -19,6 +19,7 @@ class VODPlayer {
 		s.queue = [];
 		s.onsbue = s.onSBUpdateEnd.bind(s);
 		s.onsbe  = s.onSBUpdateError.bind(s);
+		s.logger = console;
 	}
 	
 	reset () {
@@ -206,7 +207,7 @@ class VODPlayer {
 		});
 
 		s.socket.on('verbose', function(msg){
-			console.log(msg);
+			s.logger.log(msg);
 		});
 
 		s.socket.on('eos', function(){
@@ -236,10 +237,10 @@ class VODPlayer {
 		if (s.eos && !s._eos) {
 			if (s.mediaSource.readyState === 'open' && !s.sourceBuffer.updating) {
 				try {
-					//s.mediaSource.endOfStream();
+					s.mediaSource.endOfStream();
 					s._eos = true;
 				} catch(e)  {
-					console.log(e);
+					s.logger.log(e);
 				}
 			}
 			if (!s._eos) {
@@ -250,51 +251,81 @@ class VODPlayer {
 		}
 	}
 	
+	needAppend () {
+		let s = this;
+		let needAppend = true;
+		let buffered = s.getBuffered();
+		let dur = s.getDuration();
+		let cur = s.getCurrentTime();
+		if (buffered.start() > s.offset) {
+			if (cur < (buffered.start() + buffered.end()) / 2) {
+				needAppend = false;
+			}
+		}
+
+		if (dur - buffered.end() <= 1 * s.speed) {
+			needAppend = false;
+			s.logger.log("Buffer Full" + dur);
+			if (dur - cur <= 1 * s.speed) {
+				s.logger.log("Trigger EOS");
+				s.queue = [];
+			}
+		}
+
+		return needAppend;
+	}
+	
 	doAppend () {
 		let s = this;
 		if (s.sourceBuffer && !s.sourceBuffer.updating) {
 			if (s.queue.length > 0) {
-				let data = s.queue.shift();
-				try {
-					s.sourceBuffer.appendBuffer(data.buffer);
-					s.appending = true;
-				} catch(err) {
-					s.queue.unshift(data);
+				if (s.needAppend()) {
+					let data = s.queue.shift();
+					try {
+						s.sourceBuffer.appendBuffer(data.buffer);
+						s.appending = true;
+					} catch(err) {
+						s.queue.unshift(data);
+						setTimeout(function(){
+							s.doAppend();
+						}, 1000);
+					}
+					
+					if (s.queue.length > 512) {
+						if (!s.pause) {
+							s.pause = true;
+							s.socket.emit('pause');
+						}
+					} else if (s.pause) {
+						s.pause = false;
+						s.socket.emit('continue');
+					}
+				} else {
 					setTimeout(function(){
 						s.doAppend();
-					}, 1000);
+					}, 100);
 				}
-				
-				if (s.queue.length > 10) {
-					if (!s.pause) {
-						s.pause = true;
-						s.socket.emit('pause');
-					}
-				} else if (s.pause) {
-					s.pause = false;
-					s.socket.emit('continue');
-				}
-
+			} else if (s.eos) {
+				s.doEos();
 			}
-			
 		}
 	}
 	
 	onSBUpdateEnd () {
 		let s = this;
 		if (s.queue.length > 0) {
-			s.doAppend();
-		} else if (s.eos) {
-			s.doEos();
+			setTimeout(function(){
+				s.doAppend();
+			});
 		} else {
 			s.appending = false;
 		}
 	}
 	
 	onSBUpdateError (e) {
-		//let s = this;
+		let s = this;
 		//s.retry();
-		console.log(e);
+		s.logger.log(e);
 		return true;
 	}
 
