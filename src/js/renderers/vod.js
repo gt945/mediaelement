@@ -168,7 +168,7 @@ class VODPlayer {
 		}
 	}
 
-	checkBuffer(){
+	checkBuffer () {
 		let s = this;
 		var buffered = s.getBuffered();
 		var t = s.getCurrentTime ();
@@ -180,6 +180,15 @@ class VODPlayer {
 			} else {
 				s.retry();
 			}
+		}
+	}
+
+	thumbnail (sec) {
+		let s = this;
+		if (s.thumbnailurl) {
+			return s.thumbnailurl + sec;
+		} else {
+			return null;
 		}
 	}
 
@@ -204,6 +213,7 @@ class VODPlayer {
 		
 		s.socket.on('mediainfo', function(mediainfo){
 			s.duration = parseInt(mediainfo['format']['duration']);
+			s.thumbnailurl = mediainfo['thumbnailurl'];
 		});
 
 		s.socket.on('verbose', function(msg){
@@ -375,9 +385,9 @@ const VODElement = {
 
 		const id = mediaElement.id + '_' + options.prefix;
 
-		let 
+		let
 			node = null,
-			VOD = null; 
+			VOD = null;
 
 		if (mediaElement.originalNode === undefined || mediaElement.originalNode === null) {
 			node = document.createElement('audio');
@@ -482,6 +492,9 @@ const VODElement = {
 		node.native_play = node.play;
 		node.play = () => {
 			VOD.play();
+		}
+		node.thumbnail = (sec) => {
+			return VOD.thumbnail(sec);
 		}
 
 		if (mediaFiles && mediaFiles.length > 0) {
