@@ -1874,6 +1874,16 @@ var VODPlayer = function () {
 			}
 		}
 	}, {
+		key: 'thumbnail',
+		value: function thumbnail(sec) {
+			var s = this;
+			if (s.thumbnailurl) {
+				return s.thumbnailurl + sec;
+			} else {
+				return null;
+			}
+		}
+	}, {
 		key: 'onMediaSourceOpen',
 		value: function onMediaSourceOpen() {
 			var mimeCodec = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"';
@@ -1896,6 +1906,7 @@ var VODPlayer = function () {
 
 			s.socket.on('mediainfo', function (mediainfo) {
 				s.duration = parseInt(mediainfo['format']['duration']);
+				s.thumbnailurl = mediainfo['thumbnailurl'];
 			});
 
 			s.socket.on('verbose', function (msg) {
@@ -2150,6 +2161,9 @@ var VODElement = {
 		node.native_play = node.play;
 		node.play = function () {
 			VOD.play();
+		};
+		node.thumbnail = function (sec) {
+			return VOD.thumbnail(sec);
 		};
 
 		if (mediaFiles && mediaFiles.length > 0) {
