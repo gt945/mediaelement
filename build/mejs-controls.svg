@@ -12,8 +12,8 @@
    viewBox="0 0 400 120"
    version="1.1"
    id="svg60"
-   sodipodi:docname="mejs-controls2.svg"
-   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
+   sodipodi:docname="mejs-controls.svg"
+   inkscape:version="0.92.2 2405546, 2018-03-11">
   <metadata
      id="metadata66">
     <rdf:RDF>
@@ -29,25 +29,26 @@
   <defs
      id="defs64" />
   <sodipodi:namedview
-     pagecolor="#ffffff"
+     pagecolor="#81818a"
      bordercolor="#666666"
      borderopacity="1"
      objecttolerance="10"
      gridtolerance="10"
      guidetolerance="10"
-     inkscape:pageopacity="0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:window-width="1890"
-     inkscape:window-height="1080"
+     inkscape:window-height="1050"
      id="namedview62"
      showgrid="true"
-     inkscape:zoom="3.37"
-     inkscape:cx="186.69527"
-     inkscape:cy="66.988051"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="107.15512"
+     inkscape:cy="108.58527"
      inkscape:window-x="30"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg60">
+     inkscape:current-layer="svg60"
+     inkscape:pagecheckerboard="true">
     <inkscape:grid
        type="xygrid"
        id="grid3765" />
@@ -201,5 +202,40 @@
      style="fill:#ffffff;stroke-width:0.07902658"
      d="m 229.27146,12.365771 c -1.72458,-0.542264 -2.26504,-2.9612172 -0.97827,-4.3785459 0.58117,-0.6401461 1.58244,-0.8724453 2.40385,-0.5576953 0.41593,0.1593722 1.04578,0.7720166 1.24486,1.210853 0.33096,0.729579 0.30708,1.8006872 -0.0564,2.5292722 -0.50037,1.002967 -1.61143,1.511363 -2.61403,1.196116 z"
      id="path28-2"
+     inkscape:connector-curvature="0" />
+  <path
+     style="opacity:1;stroke-width:1.10870981;fill:#ffffff;fill-opacity:1"
+     d="M 262,2.2500002 V 17.25 h 16.25 V 2.2500002 Z m 1.25,1.25 H 277 V 16 h -13.75 z"
+     id="rect353"
+     inkscape:connector-curvature="0" />
+  <path
+     style="opacity:1;stroke-width:0.48185349;fill:#ffffff;fill-opacity:1"
+     d="M 268.25,8.612305 V 14.75 h 7.5 V 8.612305 Z M 269.5,9.75 h 5 v 3.75 h -5 z"
+     id="rect353-3"
+     inkscape:connector-curvature="0" />
+  <path
+     style="opacity:1;fill:#ffffff;fill-opacity:1;stroke-width:1.10870981"
+     d="m 241.75,2.375 v 15 H 258 v -15 z m 1.25,1.25 h 13.75 v 12.5 H 243 Z"
+     id="rect353-2"
+     inkscape:connector-curvature="0" />
+  <path
+     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 246,8 -2,2 2,2 z"
+     id="path5036"
+     inkscape:connector-curvature="0" />
+  <path
+     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 248,8 -2,2 2,2 z"
+     id="path5036-2"
+     inkscape:connector-curvature="0" />
+  <path
+     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 251,12 2,-2 -2,-2 z"
+     id="path5036-3"
+     inkscape:connector-curvature="0" />
+  <path
+     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 253,12 2,-2 -2,-2 z"
+     id="path5036-2-7"
      inkscape:connector-curvature="0" />
 </svg>
