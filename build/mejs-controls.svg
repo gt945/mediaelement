@@ -22,7 +22,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -41,9 +41,9 @@
      inkscape:window-height="1050"
      id="namedview62"
      showgrid="true"
-     inkscape:zoom="2.8284271"
-     inkscape:cx="107.15512"
-     inkscape:cy="108.58527"
+     inkscape:zoom="4"
+     inkscape:cx="265.94931"
+     inkscape:cy="109.16579"
      inkscape:window-x="30"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -219,23 +219,13 @@
      id="rect353-2"
      inkscape:connector-curvature="0" />
   <path
-     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     d="m 246,8 -2,2 2,2 z"
-     id="path5036"
+     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.89999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 248.5,5.5 -4.5,4.5 4.5,4.5 z"
+     id="path69"
      inkscape:connector-curvature="0" />
   <path
-     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     d="m 248,8 -2,2 2,2 z"
-     id="path5036-2"
-     inkscape:connector-curvature="0" />
-  <path
-     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     d="m 251,12 2,-2 -2,-2 z"
-     id="path5036-3"
-     inkscape:connector-curvature="0" />
-  <path
-     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.66666669px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     d="m 253,12 2,-2 -2,-2 z"
-     id="path5036-2-7"
+     style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.89999998px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 251.16606,14.5 4.5,-4.5 -4.5,-4.5 z"
+     id="path69-7"
      inkscape:connector-curvature="0" />
 </svg>
