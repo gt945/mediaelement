@@ -4176,16 +4176,6 @@ var VODPlayer = function () {
 			}
 		}
 	}, {
-		key: 'thumbnail',
-		value: function thumbnail(sec) {
-			var s = this;
-			if (s.thumbnailurl) {
-				return s.thumbnailurl + sec;
-			} else {
-				return null;
-			}
-		}
-	}, {
 		key: 'onMediaSourceOpen',
 		value: function onMediaSourceOpen() {
 			var mimeCodec = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"';
@@ -4208,7 +4198,6 @@ var VODPlayer = function () {
 
 			s.socket.on('mediainfo', function (mediainfo) {
 				s.duration = parseInt(mediainfo['format']['duration']);
-				s.thumbnailurl = mediainfo['thumbnailurl'];
 			});
 
 			s.socket.on('verbose', function (msg) {
@@ -4350,9 +4339,7 @@ var VODElement = {
 
 		var mediaElement = _document2.default.createElement('video');
 
-		if (_constants.IS_ANDROID && /\/mp(3|4)$/i.test(type) || ~['application/x-mpegurl', 'vnd.apple.mpegurl', 'audio/mpegurl', 'audio/hls', 'video/hls'].indexOf(type.toLowerCase()) && _constants.SUPPORTS_NATIVE_HLS) {
-			return 'yes';
-		} else if (mediaElement.canPlayType) {
+		if (_constants.HAS_MSE && mediaElement.canPlayType) {
 			return mediaElement.canPlayType(type.toLowerCase()).replace(/no/, '');
 		} else {
 			return '';
@@ -4463,9 +4450,6 @@ var VODElement = {
 		node.native_play = node.play;
 		node.play = function () {
 			VOD.play();
-		};
-		node.thumbnail = function (sec) {
-			return VOD.thumbnail(sec);
 		};
 
 		if (mediaFiles && mediaFiles.length > 0) {
