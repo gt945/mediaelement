@@ -5,7 +5,7 @@ import document from 'global/document';
 import mejs from '../core/mejs';
 import {renderer} from '../core/renderer';
 import {createEvent} from '../utils/general';
-import {SUPPORTS_NATIVE_HLS, IS_ANDROID} from '../utils/constants';
+import {HAS_MSE} from '../utils/constants';
 
 class VODPlayer {
 	
@@ -183,15 +183,6 @@ class VODPlayer {
 		}
 	}
 
-	thumbnail (sec) {
-		let s = this;
-		if (s.thumbnailurl) {
-			return s.thumbnailurl + sec;
-		} else {
-			return null;
-		}
-	}
-
 	onMediaSourceOpen () {
 		let mimeCodec = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"';
 		let s = this;
@@ -213,7 +204,6 @@ class VODPlayer {
 		
 		s.socket.on('mediainfo', function(mediainfo){
 			s.duration = parseInt(mediainfo['format']['duration']);
-			s.thumbnailurl = mediainfo['thumbnailurl'];
 		});
 
 		s.socket.on('verbose', function(msg){
@@ -361,13 +351,7 @@ const VODElement = {
 
 		const mediaElement = document.createElement('video');
 
-		// Due to an issue on Webkit, force the MP3 and MP4 on Android and consider native support for HLS;
-		// also consider URLs that might have obfuscated URLs
-		if ((IS_ANDROID && /\/mp(3|4)$/i.test(type)) ||
-			(~['application/x-mpegurl', 'vnd.apple.mpegurl', 'audio/mpegurl', 'audio/hls',
-			'video/hls'].indexOf(type.toLowerCase()) && SUPPORTS_NATIVE_HLS)) {
-			return 'yes';
-		} else if (mediaElement.canPlayType) {
+		if (HAS_MSE && mediaElement.canPlayType) {
 			return mediaElement.canPlayType(type.toLowerCase()).replace(/no/, '');
 		} else {
 			return '';
@@ -492,9 +476,6 @@ const VODElement = {
 		node.native_play = node.play;
 		node.play = () => {
 			VOD.play();
-		}
-		node.thumbnail = (sec) => {
-			return VOD.thumbnail(sec);
 		}
 
 		if (mediaFiles && mediaFiles.length > 0) {
