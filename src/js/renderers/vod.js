@@ -195,7 +195,8 @@ class VODPlayer {
 		s.socket.emit('start', {file:  url.parse(s.src).pathname, offset: s.offset, speed: s.speed});
 		
 		s.socket.on('data', function(data){
-			s.socket.emit('ack', data.seq);
+			if (!s.pause)
+				s.socket.emit('ack', data.seq);
 			s.queue.push(data);
 			if (!s.appending) {
 				s.doAppend();
@@ -279,6 +280,13 @@ class VODPlayer {
 		let s = this;
 		if (s.sourceBuffer && !s.sourceBuffer.updating) {
 			if (s.queue.length > 0) {
+				if (s.queue.length > 512 && !s.pause) {
+					s.pause = true;
+					s.socket.emit('pause');
+				} else if (s.queue.length < 512 && s.pause) {
+					s.pause = false;
+					s.socket.emit('continue');
+				}
 				if (s.needAppend()) {
 					let data = s.queue.shift();
 					try {
@@ -289,16 +297,6 @@ class VODPlayer {
 						setTimeout(function(){
 							s.doAppend();
 						}, 1000);
-					}
-					
-					if (s.queue.length > 512) {
-						if (!s.pause) {
-							s.pause = true;
-							s.socket.emit('pause');
-						}
-					} else if (s.pause) {
-						s.pause = false;
-						s.socket.emit('continue');
 					}
 				} else {
 					setTimeout(function(){
