@@ -280,10 +280,10 @@ class VODPlayer {
 		let s = this;
 		if (s.sourceBuffer && !s.sourceBuffer.updating) {
 			if (s.queue.length > 0) {
-				if (s.queue.length > 512 && !s.pause) {
+				if (s.queue.length > 2048 && !s.pause) {
 					s.pause = true;
 					s.socket.emit('pause');
-				} else if (s.queue.length < 512 && s.pause) {
+				} else if (s.queue.length < 2048 && s.pause) {
 					s.pause = false;
 					s.socket.emit('continue');
 				}
