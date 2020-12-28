@@ -42,9 +42,7 @@ Object.assign(MediaElementPlayer.prototype, {
 	buildprogress (player, controls, layers, media)  {
 
 		let
-			lastKeyPressTime = 0,
-			mouseIsDown = false,
-			startedPaused = false
+			mouseIsDown = false
 		;
 
 		const
@@ -218,15 +216,6 @@ Object.assign(MediaElementPlayer.prototype, {
 					t.slider.removeAttribute('aria-valuetext');
 				}
 			},
-			/**
-			 *
-			 * @private
-			 */
-			restartPlayer = () => {
-				if (new Date() - lastKeyPressTime >= 1000) {
-					media.play();
-				}
-			},
 			handleMouseup = () => {
 				if (mouseIsDown && t.getCurrentTime() !== null && t.newTime.toFixed(4) !== t.getCurrentTime().toFixed(4)) {
 					t.setCurrentTime(t.newTime);
@@ -248,9 +237,6 @@ Object.assign(MediaElementPlayer.prototype, {
 			player.options.autoRewind = autoRewindInitial;
 		});
 		t.slider.addEventListener('keydown', (e) => {
-			if ((new Date() - lastKeyPressTime) >= 1000) {
-				startedPaused = media.paused;
-			}
 
 			if (t.options.keyActions.length) {
 
@@ -303,14 +289,6 @@ Object.assign(MediaElementPlayer.prototype, {
 				}
 
 				seekTime = seekTime < 0 ? 0 : (seekTime >= duration ? duration : Math.floor(seekTime));
-				lastKeyPressTime = new Date();
-				if (!startedPaused) {
-					media.pause();
-				}
-
-				if (seekTime < t.getDuration() && !startedPaused) {
-					setTimeout(restartPlayer, 1100);
-				}
 
 				t.setCurrentTime(seekTime);
 
