@@ -1562,9 +1562,7 @@ Object.assign(_player.config, {
 Object.assign(_player2.default.prototype, {
 	buildprogress: function buildprogress(player, controls, layers, media) {
 
-		var lastKeyPressTime = 0,
-		    mouseIsDown = false,
-		    startedPaused = false;
+		var mouseIsDown = false;
 
 		var t = this,
 		    autoRewindInitial = player.options.autoRewind,
@@ -1701,11 +1699,6 @@ Object.assign(_player2.default.prototype, {
 				t.slider.removeAttribute('aria-valuetext');
 			}
 		},
-		    restartPlayer = function restartPlayer() {
-			if (new Date() - lastKeyPressTime >= 1000) {
-				media.play();
-			}
-		},
 		    handleMouseup = function handleMouseup() {
 			if (mouseIsDown && t.getCurrentTime() !== null && t.newTime.toFixed(4) !== t.getCurrentTime().toFixed(4)) {
 				t.setCurrentTime(t.newTime);
@@ -1725,9 +1718,6 @@ Object.assign(_player2.default.prototype, {
 			player.options.autoRewind = autoRewindInitial;
 		});
 		t.slider.addEventListener('keydown', function (e) {
-			if (new Date() - lastKeyPressTime >= 1000) {
-				startedPaused = media.paused;
-			}
 
 			if (t.options.keyActions.length) {
 
@@ -1778,14 +1768,7 @@ Object.assign(_player2.default.prototype, {
 				}
 
 				seekTime = seekTime < 0 ? 0 : seekTime >= duration ? duration : Math.floor(seekTime);
-				lastKeyPressTime = new Date();
-				if (!startedPaused) {
-					media.pause();
-				}
 
-				if (seekTime < t.getDuration() && !startedPaused) {
-					setTimeout(restartPlayer, 1100);
-				}
 
 				t.setCurrentTime(seekTime);
 
