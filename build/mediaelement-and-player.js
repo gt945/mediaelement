@@ -3237,7 +3237,6 @@ Object.assign(_player2.default.prototype, {
 
 				seekTime = seekTime < 0 ? 0 : seekTime >= duration ? duration : Math.floor(seekTime);
 
-
 				t.setCurrentTime(seekTime);
 
 				e.preventDefault();
